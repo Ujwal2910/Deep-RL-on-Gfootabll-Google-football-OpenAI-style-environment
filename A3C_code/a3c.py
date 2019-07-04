@@ -33,7 +33,6 @@ import gfootball.env  as env
 
 
 
-global_env_number = 4
 
 global_enviornment_name  = "academy_empty_goal_close"
 state_space_size = 39
@@ -105,40 +104,14 @@ class A3CLSTMGaussian(chainer.ChainList, a3c.A3CModel, RecurrentChainMixin):
 def main():
 
     misc.set_random_seed(0)
-
-    # Set different random seeds for different subprocesses.
-    # If seed=0 and processes=4, subprocess seeds are [0, 1, 2, 3].
-    # If seed=1 and processes=4, subprocess seeds are [4, 5, 6, 7].
-    process_seeds = np.arange(1)
-    assert process_seeds.max() < 2 ** 32
-
-    # args.outdir = experiments.prepare_output_dir(args, args.outdir)
-
-
-
-    def make_env(process_idx, test):
-
-
-        env1 = env.create_environment(env_name =global_enviornment_name,render=True,representation='simple115')
-        env1 = chainerrl.wrappers.CastObservationToFloat32(env1)
-
-        return env1
-
-
-    #env1 = env.create_environment(env_name ='academy_empty_goal_close',render=False,representation='simple115',with_checkpoints=True)
     env1 = env.create_environment(env_name=global_enviornment_name, render=True, representation='simple115')
-    #env1 = gym.make('CartPole-v0')
     env1 = chainerrl.wrappers.CastObservationToFloat32(env1)
     timestep_limit = 180
     obs_space = env1.observation_space
     print(obs_space)
     action_space = env1.action_space
     print(action_space)
-
-
-    #model = A3CFFSoftmax(115, 21)#action and state space when normal
     model = A3CFFMellowmax(state_space_size,21)
-    #model = A3CLSTMGaussian(8,11)#when phase is appended with q_length in a queue form
 
     opt = rmsprop_async.RMSpropAsync(
         lr=7e-4, eps=1e-1, alpha=0.99)
@@ -149,10 +122,7 @@ def main():
     agent = a3c.A3C(model, opt, t_max=5, gamma=0.99,
                     beta=1e-2)
 
-
-
-    #outdir = 'results/multi agent RL/Baseline_3_corrected/lstm_state_4q+4p_gaussian_product_delay and queue not clipped/agent'+str(global_env_number)+''
-    outdir ="/home/ujwal/PycharmProjects/Gfootball/"+global_enviornment_name+"/"
+    outdir = "" #path of the output directory to store the model. Give absolute path .
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
     steps=20000*5000
@@ -161,29 +131,11 @@ def main():
     eval_interval=150
     train_max_episode_len= 250
     eval_max_episode_len = 250
-
-
-    # experiments.train_agent_async(
-    #         agent=agent,
-    #         outdir=outdir,
-    #         processes=1,
-    #         make_env=make_env,
-    #         profile=True,
-    #         steps=steps,
-    #         eval_interval=eval_interval,
-    #         max_episode_len=train_max_episode_len)
-    #
-    # with open(outdir+"model.npz",'wb') as picklefile:
-    #     pk.dump(model,picklefile)
     chainerrl.experiments.train_agent_with_evaluation(agent, env1, steps, eval_n_steps,eval_n_episodes, eval_interval,
                                                       outdir, train_max_episode_len,
                                                       step_offset=0,eval_max_episode_len=eval_max_episode_len,
                                                       eval_env=env1, successful_score=100, step_hooks=[],
                                                       save_best_so_far_agent=True,logger=None )
-    # with open(outdir+"model.npz",'wb') as picklefile:
-    #     pk.dump(model,picklefile)
-
-
 
 if __name__ == '__main__':
     main()
