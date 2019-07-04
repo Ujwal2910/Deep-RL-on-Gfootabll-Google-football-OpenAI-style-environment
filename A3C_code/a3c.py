@@ -111,6 +111,8 @@ def main():
     print(obs_space)
     action_space = env1.action_space
     print(action_space)
+    
+    #21 is the action space for the environment.
     model = A3CFFMellowmax(state_space_size,21)
 
     opt = rmsprop_async.RMSpropAsync(
